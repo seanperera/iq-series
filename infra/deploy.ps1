@@ -11,8 +11,28 @@ param(
 
     [string]$ResourcePrefix = "iqs",
 
+    [string]$NameSuffix = "",
+
+    [switch]$AutoNameSuffix,
+
     [string]$SearchSku = "standard"
 )
+
+if ($NameSuffix -and $AutoNameSuffix) {
+    Write-Host "✗ Use either -NameSuffix or -AutoNameSuffix, not both"
+    exit 1
+}
+
+if ($AutoNameSuffix) {
+    $chars = 'abcdefghijklmnopqrstuvwxyz0123456789'.ToCharArray()
+    $NameSuffix = -join (1..8 | ForEach-Object { $chars[(Get-Random -Minimum 0 -Maximum $chars.Length)] })
+    Write-Host "✓ Auto-generated name suffix: $NameSuffix"
+}
+
+if ($NameSuffix -and $NameSuffix -notmatch '^[a-z0-9]{1,12}$') {
+    Write-Host "✗ NameSuffix must be lowercase letters/numbers, 1-12 characters"
+    exit 1
+}
 
 Write-Host "========================================"
 Write-Host "IQ Series — Infrastructure Deployment"
@@ -63,6 +83,9 @@ if ($exists -eq "true") {
 Write-Host ""
 Write-Host "Deploying infrastructure (this may take 5-10 minutes)..."
 Write-Host "  Resource Prefix: $ResourcePrefix"
+if ($NameSuffix) {
+    Write-Host "  Name Suffix: $NameSuffix"
+}
 Write-Host "  Location: $Location"
 Write-Host "  Search SKU: $SearchSku"
 Write-Host ""
@@ -75,6 +98,7 @@ $deploymentOutput = az deployment group create `
     --template-file $bicepFile `
     --parameters userObjectId=$userObjectId `
     --parameters resourcePrefix=$ResourcePrefix `
+    --parameters nameSuffix=$NameSuffix `
     --parameters location=$Location `
     --parameters searchServiceSku=$SearchSku `
     --output json | ConvertFrom-Json

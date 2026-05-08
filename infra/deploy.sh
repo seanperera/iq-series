@@ -8,17 +8,21 @@ set -e
 RESOURCE_GROUP=""
 LOCATION=""
 RESOURCE_PREFIX="iqs"
+NAME_SUFFIX=""
+AUTO_NAME_SUFFIX="false"
 SEARCH_SKU="standard"
 
 # Parse arguments
-while getopts "g:l:p:s:h" opt; do
+while getopts "g:l:p:n:rs:h" opt; do
   case $opt in
     g) RESOURCE_GROUP="$OPTARG" ;;
     l) LOCATION="$OPTARG" ;;
     p) RESOURCE_PREFIX="$OPTARG" ;;
+    n) NAME_SUFFIX="$OPTARG" ;;
+    r) AUTO_NAME_SUFFIX="true" ;;
     s) SEARCH_SKU="$OPTARG" ;;
     h)
-      echo "Usage: $0 -g <resource-group> -l <location> [-p <prefix>] [-s <search-sku>]"
+      echo "Usage: $0 -g <resource-group> -l <location> [-p <prefix>] [-n <name-suffix>] [-r] [-s <search-sku>]"
       echo ""
       echo "Required:"
       echo "  -g  Resource group name"
@@ -26,6 +30,8 @@ while getopts "g:l:p:s:h" opt; do
       echo ""
       echo "Optional:"
       echo "  -p  Resource prefix (default: iqs)"
+      echo "  -n  Name suffix override for globally unique resource names"
+      echo "  -r  Auto-generate a random name suffix"
       echo "  -s  Search service SKU (default: standard)"
       echo "  -h  Show this help message"
       exit 0
@@ -41,6 +47,21 @@ done
 if [ -z "$RESOURCE_GROUP" ] || [ -z "$LOCATION" ]; then
   echo "Error: Resource group (-g) and location (-l) are required"
   echo "Use -h for help"
+  exit 1
+fi
+
+if [ -n "$NAME_SUFFIX" ] && [ "$AUTO_NAME_SUFFIX" = "true" ]; then
+  echo "Error: use either -n or -r, not both"
+  exit 1
+fi
+
+if [ "$AUTO_NAME_SUFFIX" = "true" ]; then
+  NAME_SUFFIX=$(LC_ALL=C tr -dc 'a-z0-9' </dev/urandom | head -c 8)
+  echo "✓ Auto-generated name suffix: $NAME_SUFFIX"
+fi
+
+if [ -n "$NAME_SUFFIX" ] && ! [[ "$NAME_SUFFIX" =~ ^[a-z0-9]{1,12}$ ]]; then
+  echo "Error: name suffix must be lowercase letters/numbers, 1-12 characters"
   exit 1
 fi
 
@@ -92,6 +113,9 @@ fi
 echo ""
 echo "Deploying infrastructure (this may take 5-10 minutes)..."
 echo "  Resource Prefix: $RESOURCE_PREFIX"
+if [ -n "$NAME_SUFFIX" ]; then
+  echo "  Name Suffix: $NAME_SUFFIX"
+fi
 echo "  Location: $LOCATION"
 echo "  Search SKU: $SEARCH_SKU"
 echo ""
@@ -104,6 +128,7 @@ DEPLOYMENT_OUTPUT=$(az deployment group create \
   --template-file "$BICEP_FILE" \
   --parameters userObjectId="$USER_OBJECT_ID" \
   --parameters resourcePrefix="$RESOURCE_PREFIX" \
+  --parameters nameSuffix="$NAME_SUFFIX" \
   --parameters location="$LOCATION" \
   --parameters searchServiceSku="$SEARCH_SKU" \
   --output json)

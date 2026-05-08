@@ -12,6 +12,10 @@ param userObjectId string
 @description('Resource name prefix')
 param resourcePrefix string = 'iqs'
 
+@description('Optional suffix override for globally unique resource names (for example, when custom subdomains are temporarily reserved)')
+@maxLength(12)
+param nameSuffix string = ''
+
 @description('Azure region — must support agentic retrieval (see https://learn.microsoft.com/azure/search/search-region-support)')
 param location string = 'eastus2'
 
@@ -54,7 +58,7 @@ param chatModelCapacity int = 30
 // Variables
 // -----------------------------------------------
 
-var uniqueSuffix = uniqueString(resourceGroup().id)
+var uniqueSuffix = empty(nameSuffix) ? uniqueString(resourceGroup().id) : toLower(nameSuffix)
 
 var names = {
   search: '${resourcePrefix}-search-${uniqueSuffix}'

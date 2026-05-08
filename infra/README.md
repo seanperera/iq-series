@@ -9,6 +9,7 @@ This folder contains the infrastructure-as-code to deploy all Azure resources ne
 Click the button above to deploy directly from the Azure Portal. You'll be prompted for:
 - **User Object ID** — run `az ad signed-in-user show --query id -o tsv` to get yours
 - **Resource Prefix** — a short name prefix for all resources (default: `iqs`)
+- **Name Suffix** (optional) — override the generated suffix used in globally unique names (helpful when a custom subdomain is still reserved)
 - **Location** — Azure region (must support [agentic retrieval](https://learn.microsoft.com/azure/search/search-region-support))
 
 > **⚠️ Troubleshooting: Deployment script failed?**
@@ -19,6 +20,17 @@ Click the button above to deploy directly from the Azure Portal. You'll be promp
 >
 > 1. **Run the Episode 1 cookbook**: Open the [Episode 1 cookbook](../1-Foundry-IQ-Unlocking-Knowledge-for-Agents/cookbook/) and run it end-to-end — it indexes the same NASA "Earth at Night" data and creates the knowledge source and knowledge base.
 > 2. **Seed via Foundry IQ UI**: Create an index in AI Search manually using the [NASA Earth at Night dataset](https://raw.githubusercontent.com/Azure-Samples/azure-search-sample-data/main/nasa-e-book/earth-at-night-json/documents.json), then create a knowledge source and knowledge base pointing to it through the Foundry IQ portal.
+
+> **⚠️ Troubleshooting: `CustomDomainInUse` for OpenAI or AI Services**
+>
+> Cognitive Services custom subdomain names are globally unique and may remain reserved for a period after deletion. If deployment fails with `CustomDomainInUse`, redeploy with a different suffix:
+>
+> - Windows PowerShell:
+>   `./deploy.ps1 -ResourceGroupName "iq-series-rg" -Location "eastus2" -NameSuffix "a1b2c3d4"`
+>   or `./deploy.ps1 -ResourceGroupName "iq-series-rg" -Location "eastus2" -AutoNameSuffix`
+> - macOS / Linux:
+>   `./deploy.sh -g "iq-series-rg" -l "eastus2" -n "a1b2c3d4"`
+>   or `./deploy.sh -g "iq-series-rg" -l "eastus2" -r`
 
 After deployment, copy the output values from the portal and create a `.env` file **inside each episode's `cookbook/` folder** (e.g., `1-Foundry-IQ-Unlocking-Knowledge-for-Agents/cookbook/.env`):
 
