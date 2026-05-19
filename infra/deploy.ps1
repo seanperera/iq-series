@@ -15,7 +15,7 @@ param(
 
     [switch]$AutoNameSuffix,
 
-    [string]$SearchSku = "standard"
+    [string]$SearchSku = "free"
 )
 
 if ($NameSuffix -and $AutoNameSuffix) {

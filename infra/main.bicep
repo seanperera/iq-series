@@ -20,7 +20,7 @@ param nameSuffix string = ''
 param location string = 'eastus2'
 
 @description('AI Search SKU')
-@allowed(['basic', 'standard', 'standard2', 'standard3'])
+@allowed(['free','basic', 'standard', 'standard2', 'standard3'])
 param searchServiceSku string = 'basic'
 
 @description('OpenAI service SKU')
